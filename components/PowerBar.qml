@@ -2,10 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 
 /*
- * PowerBar.qml - Row of power action buttons (suspend, reboot, shutdown).
+ * PowerBar.qml - Row of power action buttons.
  *
- * Each button is gated by the corresponding sddm.can* property.
- * Uses Unicode symbols for icons to avoid dependency on icon themes.
+ * Emits signals for each action. The parent wires these to sddm.
  */
 
 Item {
@@ -14,6 +13,14 @@ Item {
     property color textColor: "white"
     property int fontSize: 10
     property int iconSize: 22
+
+    property bool canSuspend: false
+    property bool canReboot: false
+    property bool canPowerOff: false
+
+    signal suspendClicked()
+    signal rebootClicked()
+    signal powerOffClicked()
 
     implicitWidth: row.implicitWidth
     implicitHeight: row.implicitHeight
@@ -24,24 +31,24 @@ Item {
         spacing: 24
 
         PowerButton {
-            icon: "\u23FB"    // Power symbol (⏻)
+            icon: "\u23FB"   // ⏻
             label: "Suspend"
-            visible: sddm.canSuspend
-            onClicked: sddm.suspend()
+            visible: root.canSuspend
+            onClicked: root.suspendClicked()
         }
 
         PowerButton {
-            icon: "\u21BB"    // Clockwise arrow (↻)
+            icon: "\u21BB"   // ↻
             label: "Reboot"
-            visible: sddm.canReboot
-            onClicked: sddm.reboot()
+            visible: root.canReboot
+            onClicked: root.rebootClicked()
         }
 
         PowerButton {
-            icon: "\u2B58"    // Heavy circle (⭘)
+            icon: "\u2B58"   // ⭘
             label: "Shut Down"
-            visible: sddm.canPowerOff
-            onClicked: sddm.powerOff()
+            visible: root.canPowerOff
+            onClicked: root.powerOffClicked()
         }
     }
 
@@ -67,9 +74,7 @@ Item {
                 font.pointSize: root.iconSize
                 renderType: Text.NativeRendering
 
-                Behavior on color {
-                    ColorAnimation { duration: 120 }
-                }
+                Behavior on color { ColorAnimation { duration: 120 } }
             }
 
             Text {
@@ -79,9 +84,7 @@ Item {
                 font.pointSize: root.fontSize - 2
                 renderType: Text.NativeRendering
 
-                Behavior on color {
-                    ColorAnimation { duration: 120 }
-                }
+                Behavior on color { ColorAnimation { duration: 120 } }
             }
         }
 

@@ -4,7 +4,7 @@ import QtQuick.Controls
 /*
  * SessionSelector.qml - Desktop session dropdown.
  *
- * Binds to sessionModel and exposes the selected index.
+ * Receives the session model via the `sessions` property.
  */
 
 Item {
@@ -13,6 +13,7 @@ Item {
     property color textColor: "white"
     property int fontSize: 10
     property string fontFamily: ""
+    property var sessions       // bound to sessionModel by parent
     property alias currentIndex: sessionCombo.currentIndex
 
     implicitWidth: sessionCombo.implicitWidth
@@ -22,8 +23,8 @@ Item {
         id: sessionCombo
         anchors.fill: parent
 
-        model: sessionModel
-        currentIndex: sessionModel.lastIndex
+        model: root.sessions
+        currentIndex: root.sessions ? root.sessions.lastIndex || 0 : 0
         textRole: "name"
 
         font.pointSize: root.fontSize
@@ -52,7 +53,7 @@ Item {
         indicator: Text {
             x: sessionCombo.width - width - 10
             anchors.verticalCenter: parent.verticalCenter
-            text: "\u25BE"  // small down triangle
+            text: "\u25BE"
             color: root.textColor
             font.pointSize: root.fontSize
         }
