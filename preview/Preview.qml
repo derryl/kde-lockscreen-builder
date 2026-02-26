@@ -34,7 +34,7 @@ Window {
         id: mockConfig
         // Set to "" to use the solid fallback color, or provide a path
         // to an image (e.g. drop your own into assets/background.jpg).
-        property string background: "assets/background.jpg"
+        property string background: Qt.resolvedUrl("../assets/background.jpg")
         property string type: "image"
         property string color: "#1a1a2e"
         property string primaryColor: "#ffffff"
