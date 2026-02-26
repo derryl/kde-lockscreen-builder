@@ -5,7 +5,7 @@ import QtQuick.Controls
 import "components"
 
 /*
- * Main.qml - Root component for the gitpusher SDDM login theme.
+ * Main.qml - Root component for the SDDM login theme.
  *
  * SDDM injects these as context properties (available globally):
  *   sddm          - proxy with login(), powerOff(), reboot(), suspend(), etc.

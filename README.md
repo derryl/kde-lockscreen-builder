@@ -1,12 +1,16 @@
-# gitpusher-login-theme
+# kde-lockscreen-builder
 
-A minimal, clean SDDM login theme for KDE Plasma 6, built with pure QtQuick (no KDE/Plasma dependencies). Includes a live-preview development workflow for rapid iteration on colors, typography, layout, and background images without logging out or reinstalling.
+Build, preview, and iterate on custom KDE login screens without logging out, reinstalling, or guessing.
 
-## Project Structure
+This project gives you a live-preview development environment for SDDM themes on KDE Plasma 6. Edit QML, tweak colors, swap backgrounds -- and see every change instantly in a standalone window. When you're happy with the result, install it as your real login screen with one command.
+
+**Who is this for?** Anyone who wants to customize their KDE/SDDM login screen -- whether you're importing an existing theme to tweak it, or building one from scratch.
+
+## What's Inside
 
 ```
-gitpusher-login-theme/
-├── Main.qml                  # SDDM entry point (uses SDDM context properties)
+kde-lockscreen-builder/
+├── Main.qml                  # SDDM entry point (the actual theme)
 ├── metadata.desktop           # Theme registration (Theme-API 2.0, Qt6)
 ├── theme.conf                 # All configurable values: colors, fonts, background, clock
 ├── components/
@@ -15,12 +19,12 @@ gitpusher-login-theme/
 │   ├── SessionSelector.qml    # Desktop session dropdown
 │   └── PowerBar.qml           # Suspend / reboot / shutdown buttons
 ├── preview/
-│   └── Preview.qml            # Mock harness for live development (no SDDM needed)
+│   └── Preview.qml            # Mock harness — previews your theme without SDDM
 ├── scripts/
-│   ├── preview.sh             # File-watcher: auto-restarts preview on save
+│   ├── preview.sh             # File-watcher: auto-restarts preview on every save
 │   └── test-sddm.sh           # Full-fidelity SDDM greeter test
 ├── assets/
-│   └── background.jpg         # Your background image (not tracked in git)
+│   └── background.jpg         # Your background image
 └── faces/
     └── .face.icon             # Default user avatar placeholder
 ```
@@ -28,47 +32,71 @@ gitpusher-login-theme/
 ## Prerequisites
 
 - KDE Plasma 6 with SDDM
-- Qt 6 (`qt6-declarative` package, provides `qml6` and `qmlscene6`)
+- Qt 6 (`qt6-declarative` package -- provides `qml6`)
 - `entr` for file-watching (`sudo pacman -S entr` on Arch)
 
 ## Quick Start
 
-1. Clone the repo and add your background image:
+### Option A: Start From the Included Starter Theme
+
+The repo ships with a minimal, clean theme that works out of the box. Clone and preview it immediately:
+
+```sh
+git clone https://github.com/derryl/kde-lockscreen-builder.git
+cd kde-lockscreen-builder
+cp /path/to/your/wallpaper.jpg assets/background.jpg
+./scripts/preview.sh
+```
+
+Edit any `.qml` file or `theme.conf`, save, and the preview window restarts automatically.
+
+### Option B: Import an Existing Theme
+
+Already have a theme you want to modify? Copy its files into this project to get the live-preview workflow:
+
+1. Clone this repo:
 
    ```sh
-   cd gitpusher-login-theme
-   cp /path/to/your/wallpaper.jpg assets/background.jpg
+   git clone https://github.com/derryl/kde-lockscreen-builder.git
+   cd kde-lockscreen-builder
    ```
 
-2. Launch the live preview:
+2. Copy the theme's files over the project files. SDDM themes typically have a `Main.qml`, `metadata.desktop`, `theme.conf`, and asset directories -- replace the ones in this repo with yours:
+
+   ```sh
+   # Example: importing from an installed SDDM theme
+   cp -r /usr/share/sddm/themes/some-theme/* .
+   ```
+
+3. Launch the preview:
 
    ```sh
    ./scripts/preview.sh
    ```
 
-3. Edit any `.qml` file or `theme.conf`, save, and the preview window auto-restarts.
+   If the imported theme uses KDE/Plasma-specific QML imports (e.g. `org.kde.plasma.*`), the standalone preview won't be able to render those parts. You can still use `./scripts/test-sddm.sh` for full-fidelity testing, or incrementally replace those imports with pure QtQuick equivalents.
 
 ## Development Workflow
 
-### Tier 1: Fast Iteration (qml6 + file watcher)
+### Live Preview (primary loop)
 
-The primary development loop. `preview/Preview.qml` mocks all SDDM-provided objects (`sddm`, `userModel`, `sessionModel`, `config`, `keyboard`) so the theme renders in a standalone window without the real SDDM greeter.
+`preview/Preview.qml` mocks all SDDM-provided objects (`sddm`, `userModel`, `sessionModel`, `config`, `keyboard`) so your theme renders in a standalone window -- no real SDDM greeter needed.
 
 ```sh
 ./scripts/preview.sh
 ```
 
-This watches all `.qml`, `.conf`, and image files using `entr`. On every file change, the preview window is killed and relaunched automatically.
+This watches all `.qml`, `.conf`, and image files using `entr`. On every save, the preview window is killed and relaunched automatically.
 
-You can also launch the preview manually (without file watching):
+You can also launch the preview once without file-watching:
 
 ```sh
 qml6 preview/Preview.qml
 ```
 
-In mock mode, type the password `test` to simulate a successful login. Any other password triggers the "Login Failed" notification.
+In preview mode, type the password `test` to simulate a successful login. Any other password triggers the "Login Failed" notification.
 
-### Tier 2: Full-Fidelity SDDM Test
+### Full-Fidelity SDDM Test
 
 Periodically verify your theme against the real SDDM greeter:
 
@@ -76,7 +104,7 @@ Periodically verify your theme against the real SDDM greeter:
 ./scripts/test-sddm.sh
 ```
 
-This runs `sddm-greeter-qt6 --test-mode`, which shows your actual system user list, session list, and keyboard state. Login and power actions are non-functional in test mode, but layout and data binding are accurate.
+This runs `sddm-greeter-qt6 --test-mode`, which shows your actual system user list, session list, and keyboard state. Login and power actions are non-functional in test mode, but layout and data binding are real.
 
 ## Configuration
 
@@ -101,65 +129,70 @@ clockVisible=true
 clockFormat=hh:mm
 dateFormat=dddd, MMMM d
 
-# Screen dimensions (fallback)
+# Screen dimensions (fallback when not provided by SDDM)
 screenWidth=1920
 screenHeight=1080
 ```
 
 Changes to `theme.conf` are picked up by the file watcher just like QML changes.
 
-## Building
+## Installing Your Theme
 
-No build step is required. SDDM themes are interpreted QML — the `.qml` files, `theme.conf`, `metadata.desktop`, and assets are used directly at runtime.
+When you're satisfied with your theme, install it so SDDM uses it at your real login screen. SDDM themes live in `/usr/share/sddm/themes/`.
 
-## Installing
+### 1. Choose a theme name
 
-SDDM themes live in `/usr/share/sddm/themes/`. You can either symlink (recommended for development) or copy (for distribution).
+Pick a name for your theme (e.g. `my-login-theme`). Make sure `metadata.desktop` has the matching `Theme-Id`:
 
-### Option A: Symlink (recommended during development)
-
-A symlink lets you keep editing files in your project directory and see changes reflected immediately (after re-running the SDDM test or on next login):
-
-```sh
-sudo ln -sf "$(pwd)" /usr/share/sddm/themes/gitpusher-login
+```ini
+Theme-Id=my-login-theme
 ```
 
-### Option B: Copy (for final installation)
+### 2. Install the files
+
+**Symlink (recommended during development)** -- lets you keep editing and see changes on next login:
 
 ```sh
-sudo cp -r . /usr/share/sddm/themes/gitpusher-login
+sudo ln -sf "$(pwd)" /usr/share/sddm/themes/my-login-theme
 ```
 
-### Activate the theme
-
-After installing, set it as the active SDDM theme:
+**Copy (for a final install):**
 
 ```sh
+sudo cp -r . /usr/share/sddm/themes/my-login-theme
+```
+
+### 3. Activate the theme
+
+Tell SDDM to use your theme:
+
+```sh
+sudo mkdir -p /etc/sddm.conf.d
 sudo tee /etc/sddm.conf.d/theme.conf > /dev/null <<EOF
 [Theme]
-Current=gitpusher-login
+Current=my-login-theme
 EOF
 ```
 
-Or use KDE System Settings: **System Settings > Colors & Themes > Login Screen (SDDM)**.
+Or use the GUI: **System Settings > Colors & Themes > Login Screen (SDDM)**.
 
-### Verify
+### 4. Verify
 
-Run the full-fidelity test against the installed path to confirm:
+Run the full-fidelity test against the installed path to confirm everything works:
 
 ```sh
-sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/gitpusher-login
+sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/my-login-theme
 ```
 
 ## Architecture Notes
 
-The theme is built with **pure QtQuick** — no imports from `org.kde.plasma.*`, `org.kde.breeze.components`, or `Kirigami`. This provides:
+The included starter theme is built with **pure QtQuick** -- no imports from `org.kde.plasma.*`, `org.kde.breeze.components`, or `Kirigami`. This means:
 
 - Total control over every visual element
 - No dependency on KDE Plasma libraries at the SDDM level
 - Easy mocking: only 5 SDDM globals need stubs (`sddm`, `config`, `userModel`, `sessionModel`, `keyboard`)
 
-Components receive their dependencies as explicit properties rather than relying on SDDM's context properties directly. This makes them testable in the preview harness and reusable.
+Components receive their dependencies as explicit properties rather than relying on SDDM context properties directly, making them testable in the preview harness and reusable across themes.
 
 ## License
 

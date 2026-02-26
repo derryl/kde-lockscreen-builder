@@ -13,7 +13,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "=== SDDM Theme Preview ==="
+echo "=== KDE Lockscreen Builder — Live Preview ==="
 echo "Project: $PROJECT_DIR"
 echo "Press Ctrl+C to stop"
 echo ""

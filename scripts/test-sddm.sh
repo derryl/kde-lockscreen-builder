@@ -14,7 +14,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-echo "=== SDDM Greeter Test Mode ==="
+echo "=== KDE Lockscreen Builder — SDDM Test Mode ==="
 echo "Theme: $PROJECT_DIR"
 echo ""
 
