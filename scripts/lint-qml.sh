@@ -38,6 +38,10 @@ echo ""
 # ── Runtime type-error check ──────────────────────────────────────
 echo "=== Runtime: checking for type errors ==="
 
+# Use the Basic style to avoid Breeze/Plasma-specific errors that only
+# occur outside a full Plasma session (e.g. T.Overlay in ComboBox).
+export QT_QUICK_CONTROLS_STYLE=Basic
+
 STDERR_LOG=$(mktemp)
 trap 'rm -f "$STDERR_LOG"' EXIT
 
@@ -53,14 +57,11 @@ else
 fi
 
 # Filter for errors we care about (type assignment, ReferenceError, TypeError).
-# Ignore the Breeze ComboBox warnings — those are from KDE's own style code.
 if grep -E 'Unable to assign|ReferenceError|TypeError' "$STDERR_LOG" \
-    | grep -v 'qrc:.*breeze' \
     | grep -v 'Cannot open:' \
     | grep -q .; then
     echo "FAIL: runtime type errors detected:"
     grep -E 'Unable to assign|ReferenceError|TypeError' "$STDERR_LOG" \
-        | grep -v 'qrc:.*breeze' \
         | grep -v 'Cannot open:'
     FAILED=1
 else

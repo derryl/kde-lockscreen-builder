@@ -24,6 +24,11 @@ cleanup() {
 }
 trap cleanup SIGINT SIGTERM
 
+# Force the Basic Qt Quick Controls style so the standalone preview doesn't
+# load Breeze, which depends on Plasma-specific overlay types that are
+# unavailable outside a full Plasma session.
+export QT_QUICK_CONTROLS_STYLE=Basic
+
 echo "=== KDE Lockscreen Builder — Live Preview ==="
 echo "Project: $PROJECT_DIR"
 echo "Press Ctrl+C to stop"
