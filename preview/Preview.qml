@@ -32,6 +32,8 @@ Window {
 
     QtObject {
         id: mockConfig
+        // Set to "" to use the solid fallback color, or provide a path
+        // to an image (e.g. drop your own into assets/background.jpg).
         property string background: Qt.resolvedUrl("../assets/background.jpg")
         property string type: "image"
         property string color: "#1a1a2e"
@@ -121,9 +123,14 @@ Window {
     Image {
         id: backgroundImage
         anchors.fill: parent
-        source: mockConfig.background
+        source: mockConfig.background || ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
+        onStatusChanged: {
+            if (status === Image.Error && source != "")
+                console.log("Background image not found — using fallback color. " +
+                    "Drop an image into assets/background.jpg or update theme.conf.")
+        }
     }
 
     Rectangle {

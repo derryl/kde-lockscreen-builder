@@ -13,6 +13,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+ENTR_PID=""
+
+cleanup() {
+    trap - SIGINT SIGTERM   # prevent re-entry
+    [[ -n "$ENTR_PID" ]] && kill "$ENTR_PID" 2>/dev/null && wait "$ENTR_PID" 2>/dev/null
+    echo ""
+    echo "Preview stopped."
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
+
+# Force the Basic Qt Quick Controls style so the standalone preview doesn't
+# load Breeze, which depends on Plasma-specific overlay types that are
+# unavailable outside a full Plasma session.
+export QT_QUICK_CONTROLS_STYLE=Basic
+
 echo "=== KDE Lockscreen Builder — Live Preview ==="
 echo "Project: $PROJECT_DIR"
 echo "Press Ctrl+C to stop"
@@ -22,5 +38,8 @@ cd "$PROJECT_DIR"
 
 while true; do
     find . \( -name '*.qml' -o -name '*.conf' -o -name '*.jpg' -o -name '*.png' -o -name '*.svg' \) \
-        | entr -d -r qml6 preview/Preview.qml
+        | entr -d -r qml6 preview/Preview.qml &
+    ENTR_PID=$!
+    wait "$ENTR_PID" || true
+    ENTR_PID=""
 done

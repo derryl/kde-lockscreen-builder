@@ -28,7 +28,7 @@ Item {
         textRole: "name"
 
         font.pointSize: root.fontSize
-        font.family: root.fontFamily || undefined
+        font.family: root.fontFamily
 
         contentItem: Text {
             leftPadding: 10

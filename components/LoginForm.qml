@@ -47,7 +47,7 @@ Item {
             color: root.textColor
             font.pointSize: root.fontSize + 8
             font.weight: Font.Light
-            font.family: root.fontFamily || undefined
+            font.family: root.fontFamily
             renderType: Text.NativeRendering
         }
 
@@ -59,7 +59,7 @@ Item {
             placeholderText: "Username"
             text: root.defaultUsername
             font.pointSize: root.fontSize
-            font.family: root.fontFamily || undefined
+            font.family: root.fontFamily
 
             color: root.textColor
             placeholderTextColor: Qt.rgba(1, 1, 1, 0.5)
@@ -86,7 +86,7 @@ Item {
             placeholderText: "Password"
             echoMode: TextInput.Password
             font.pointSize: root.fontSize
-            font.family: root.fontFamily || undefined
+            font.family: root.fontFamily
 
             color: root.textColor
             placeholderTextColor: Qt.rgba(1, 1, 1, 0.5)
@@ -122,7 +122,7 @@ Item {
             height: 44
             text: "Log In"
             font.pointSize: root.fontSize
-            font.family: root.fontFamily || undefined
+            font.family: root.fontFamily
 
             contentItem: Text {
                 text: loginButton.text
