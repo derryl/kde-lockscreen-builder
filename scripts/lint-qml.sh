@@ -18,25 +18,56 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_DIR"
 
+# ── Locate Qt 6 tools ────────────────────────────────────────────
+# Binary names and paths vary across distros:
+#   Arch:   qmllint, qml6          (on PATH)
+#   Ubuntu: qmllint, qml           (in /usr/lib/qt6/bin)
+for candidate in /usr/lib/qt6/bin /usr/lib64/qt6/bin; do
+    [[ -d "$candidate" ]] && export PATH="$candidate:$PATH"
+done
+
+find_tool() {
+    for name in "$@"; do
+        if command -v "$name" &>/dev/null; then
+            echo "$name"
+            return
+        fi
+    done
+    echo ""
+}
+
+QMLLINT=$(find_tool qmllint qmllint6)
+QML_RUNTIME=$(find_tool qml6 qml)
+
 FAILED=0
 
 # ── Static analysis with qmllint ──────────────────────────────────
 echo "=== qmllint: static analysis ==="
 
-QML_FILES=$(find . -name '*.qml' -not -path './.git/*')
-echo "Checking: $QML_FILES"
-echo ""
-
-if ! qmllint $QML_FILES; then
-    echo "FAIL: qmllint found issues."
-    FAILED=1
+if [[ -z "$QMLLINT" ]]; then
+    echo "SKIP: qmllint not found."
 else
-    echo "PASS: qmllint clean."
+    QML_FILES=$(find . -name '*.qml' -not -path './.git/*')
+    echo "Checking: $QML_FILES"
+    echo ""
+
+    if ! $QMLLINT $QML_FILES; then
+        echo "FAIL: qmllint found issues."
+        FAILED=1
+    else
+        echo "PASS: qmllint clean."
+    fi
 fi
 echo ""
 
 # ── Runtime type-error check ──────────────────────────────────────
 echo "=== Runtime: checking for type errors ==="
+
+if [[ -z "$QML_RUNTIME" ]]; then
+    echo "SKIP: qml runtime not found (tried qml6, qml)."
+    echo ""
+    exit $FAILED
+fi
 
 # Use the Basic style to avoid Breeze/Plasma-specific errors that only
 # occur outside a full Plasma session (e.g. T.Overlay in ComboBox).
@@ -47,9 +78,9 @@ trap 'rm -f "$STDERR_LOG"' EXIT
 
 # Run preview for 3 seconds under a virtual framebuffer, capture stderr.
 if command -v xvfb-run &>/dev/null; then
-    timeout 3 xvfb-run -a qml6 preview/Preview.qml 2>"$STDERR_LOG" || true
+    timeout 3 xvfb-run -a "$QML_RUNTIME" preview/Preview.qml 2>"$STDERR_LOG" || true
 elif [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
-    timeout 3 qml6 preview/Preview.qml 2>"$STDERR_LOG" || true
+    timeout 3 "$QML_RUNTIME" preview/Preview.qml 2>"$STDERR_LOG" || true
 else
     echo "SKIP: no display and xvfb-run not available."
     echo ""
