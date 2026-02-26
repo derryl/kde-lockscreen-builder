@@ -24,7 +24,7 @@ Window {
     width: 1920
     height: 1080
     visible: true
-    title: "SDDM Theme Preview — gitpusher-login"
+    title: "KDE Lockscreen Builder — Preview"
 
     // ═══════════════════════════════════════════════════════════════
     //  Mock objects
@@ -79,12 +79,12 @@ Window {
 
     ListModel {
         id: mockUserModel
-        property string lastUser: "gitpusher"
+        property string lastUser: "user"
         property int lastIndex: 0
         property int disableAvatarsThreshold: 7
         property bool containsAllUsers: true
 
-        ListElement { name: "gitpusher"; realName: "gitpusher"; icon: ""; needsPassword: true }
+        ListElement { name: "user"; realName: "User"; icon: ""; needsPassword: true }
         ListElement { name: "guest"; realName: "Guest User"; icon: ""; needsPassword: true }
     }
 
