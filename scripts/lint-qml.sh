@@ -5,7 +5,10 @@
 # Runs qmllint (static) on all QML source files, then launches the preview
 # under xvfb for a few seconds to catch runtime type-assignment warnings.
 #
-# Usage:  ./scripts/lint-qml.sh
+# Usage:  ./scripts/lint-qml.sh [-theme <name>]
+#
+# Options:
+#   -theme <name>   Lint a specific theme (default: lint all themes)
 #
 # Exit codes:
 #   0  All checks passed
@@ -17,6 +20,30 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_DIR"
+
+# ── Parse arguments ─────────────────────────────────────────────
+THEME_NAME=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -theme)
+            THEME_NAME="${2:?Error: -theme requires a name}"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: $0 [-theme <name>]"
+            echo ""
+            echo "Options:"
+            echo "  -theme <name>   Lint a specific theme (default: lint all themes)"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            echo "Usage: $0 [-theme <name>]" >&2
+            exit 1
+            ;;
+    esac
+done
 
 # ── Locate Qt 6 tools ────────────────────────────────────────────
 # Binary names and paths vary across distros:
@@ -41,13 +68,27 @@ QML_RUNTIME=$(find_tool qml6 qml)
 
 FAILED=0
 
+# Build list of theme directories to check.
+if [[ -n "$THEME_NAME" ]]; then
+    THEME_DIRS=("themes/$THEME_NAME")
+    if [[ ! -d "${THEME_DIRS[0]}" ]]; then
+        echo "Error: theme directory not found: ${THEME_DIRS[0]}" >&2
+        exit 1
+    fi
+else
+    THEME_DIRS=()
+    for d in themes/*/; do
+        [[ -d "$d" ]] && THEME_DIRS+=("${d%/}")
+    done
+fi
+
 # ── Static analysis with qmllint ──────────────────────────────────
 echo "=== qmllint: static analysis ==="
 
 if [[ -z "$QMLLINT" ]]; then
     echo "SKIP: qmllint not found."
 else
-    QML_FILES=$(find . -name '*.qml' -not -path './.git/*')
+    QML_FILES=$(find "${THEME_DIRS[@]}" preview -name '*.qml' -not -path './.git/*')
     echo "Checking: $QML_FILES"
     echo ""
 
@@ -81,7 +122,14 @@ fi
 export QT_QUICK_CONTROLS_STYLE=Basic
 
 STDERR_LOG=$(mktemp)
-trap 'rm -f "$STDERR_LOG"' EXIT
+trap 'rm -f "$STDERR_LOG" "$PROJECT_DIR/preview/components" "$PROJECT_DIR/preview/assets"' EXIT
+
+# Test with the default theme (or the specified one).
+RUNTIME_THEME="${THEME_DIRS[0]}"
+RUNTIME_THEME_DIR="$PROJECT_DIR/$RUNTIME_THEME"
+# Symlink the theme's components and assets into preview/ so QML resolves them.
+ln -sfn "$RUNTIME_THEME_DIR/components" "$PROJECT_DIR/preview/components"
+ln -sfn "$RUNTIME_THEME_DIR/assets"     "$PROJECT_DIR/preview/assets"
 
 # Run preview for 3 seconds under a virtual framebuffer, capture stderr.
 if command -v xvfb-run &>/dev/null; then
