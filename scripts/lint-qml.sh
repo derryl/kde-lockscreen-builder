@@ -122,20 +122,23 @@ fi
 export QT_QUICK_CONTROLS_STYLE=Basic
 
 STDERR_LOG=$(mktemp)
-trap 'rm -f "$STDERR_LOG" "$PROJECT_DIR/preview/components" "$PROJECT_DIR/preview/assets"' EXIT
+trap 'rm -f "$STDERR_LOG" "$PROJECT_DIR/preview/components" "$PROJECT_DIR/preview/assets" "$PROJECT_DIR/preview/Main.qml"' EXIT
 
 # Test with the default theme (or the specified one).
 RUNTIME_THEME="${THEME_DIRS[0]}"
 RUNTIME_THEME_DIR="$PROJECT_DIR/$RUNTIME_THEME"
-# Symlink the theme's components and assets into preview/ so QML resolves them.
-ln -sfn "$RUNTIME_THEME_DIR/components" "$PROJECT_DIR/preview/components"
-ln -sfn "$RUNTIME_THEME_DIR/assets"     "$PROJECT_DIR/preview/assets"
+# Symlink the theme's Main.qml, components, and assets into preview/ so QML resolves them.
+ln -sfn "$RUNTIME_THEME_DIR/Main.qml"    "$PROJECT_DIR/preview/Main.qml"
+ln -sfn "$RUNTIME_THEME_DIR/components"  "$PROJECT_DIR/preview/components"
+ln -sfn "$RUNTIME_THEME_DIR/assets"      "$PROJECT_DIR/preview/assets"
 
 # Run preview for 3 seconds under a virtual framebuffer, capture stderr.
+# Use the Python preview host so SDDM context properties are injected.
+PREVIEW_CMD="python3 $SCRIPT_DIR/preview-host.py $RUNTIME_THEME_DIR"
 if command -v xvfb-run &>/dev/null; then
-    timeout 3 xvfb-run -a "$QML_RUNTIME" preview/Preview.qml 2>"$STDERR_LOG" || true
+    timeout 3 xvfb-run -a $PREVIEW_CMD 2>"$STDERR_LOG" || true
 elif [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
-    timeout 3 "$QML_RUNTIME" preview/Preview.qml 2>"$STDERR_LOG" || true
+    timeout 3 $PREVIEW_CMD 2>"$STDERR_LOG" || true
 else
     echo "SKIP: no display and xvfb-run not available."
     echo ""

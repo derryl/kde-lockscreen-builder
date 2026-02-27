@@ -56,7 +56,7 @@ fi
 # ── Setup ───────────────────────────────────────────────────────
 cleanup() {
     trap - SIGINT SIGTERM   # prevent re-entry
-    rm -f "$PROJECT_DIR/preview/components" "$PROJECT_DIR/preview/assets"
+    rm -f "$PROJECT_DIR/preview/components" "$PROJECT_DIR/preview/assets" "$PROJECT_DIR/preview/Main.qml"
     echo ""
     echo "Preview stopped."
     exit 0
@@ -68,10 +68,11 @@ trap cleanup SIGINT SIGTERM
 # unavailable outside a full Plasma session.
 export QT_QUICK_CONTROLS_STYLE=Basic
 
-# Symlink the theme's components and assets into preview/ so QML's
+# Symlink the theme's Main.qml, components, and assets into preview/ so QML's
 # relative imports and asset paths resolve to the selected theme.
-ln -sfn "$THEME_DIR/components" "$PROJECT_DIR/preview/components"
-ln -sfn "$THEME_DIR/assets"     "$PROJECT_DIR/preview/assets"
+ln -sfn "$THEME_DIR/Main.qml"    "$PROJECT_DIR/preview/Main.qml"
+ln -sfn "$THEME_DIR/components"  "$PROJECT_DIR/preview/components"
+ln -sfn "$THEME_DIR/assets"      "$PROJECT_DIR/preview/assets"
 
 echo "=== KDE Lockscreen Builder — Live Preview ==="
 echo "Project: $PROJECT_DIR"
@@ -81,6 +82,7 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 # Launch the PyQt6 preview host (handles file watching + cache clearing).
-python3 "$SCRIPT_DIR/preview-host.py"
+# Pass the theme directory so mock objects can read theme.conf.
+python3 "$SCRIPT_DIR/preview-host.py" "$THEME_DIR"
 
 cleanup
