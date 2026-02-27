@@ -1,6 +1,8 @@
 # kde-lockscreen-builder
 
-Build, preview, and iterate on custom KDE login screens without logging out, reinstalling, or guessing.
+Build and customize your KDE login screen without having to actually reinstall the theme and log out just to see how it looks.
+
+<img width="2120" height="1498" alt="image" src="https://github.com/user-attachments/assets/9dfbebbf-7c44-4c64-9577-08e9e2b2d25e" />
 
 This project gives you a live-preview development environment for SDDM themes on KDE Plasma 6. Edit QML, tweak colors, swap backgrounds -- and see every change instantly in a standalone window. When you're happy with the result, install it as your real login screen with one command.
 
