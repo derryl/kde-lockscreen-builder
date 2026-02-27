@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 
 /*
  * LoginForm.qml - Username/password entry and login trigger.
@@ -74,6 +75,16 @@ Item {
             leftPadding: 14
             rightPadding: 14
 
+            layer.enabled: true
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 2
+                radius: 12.0
+                samples: 25
+                color: "#40000000"
+                transparentBorder: true
+            }
+
             Keys.onReturnPressed: passwordField.forceActiveFocus()
             Keys.onEnterPressed: passwordField.forceActiveFocus()
         }
@@ -100,6 +111,16 @@ Item {
 
             leftPadding: 14
             rightPadding: 14
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                horizontalOffset: 0
+                verticalOffset: 2
+                radius: 12.0
+                samples: 25
+                color: "#40000000"
+                transparentBorder: true
+            }
 
             Keys.onReturnPressed: doLogin()
             Keys.onEnterPressed: doLogin()
