@@ -1,3 +1,4 @@
 # Symlinks created by preview/lint scripts at runtime
 preview/components
 preview/assets
+preview/.reload-signal

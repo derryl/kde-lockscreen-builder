@@ -2,8 +2,9 @@
 #
 # preview.sh - Live-reload preview for the SDDM theme.
 #
-# Watches all QML, conf, and image files. On any change, kills the
-# running qml6 process and relaunches the Preview.qml harness.
+# Launches the PyQt6 preview host which watches theme files and calls
+# engine.clearComponentCache() on changes, giving true in-place hot
+# reload without restarting the window.
 #
 # Usage:  ./scripts/preview.sh [-theme <name>]
 #
@@ -53,11 +54,8 @@ if [[ ! -d "$THEME_DIR" ]]; then
 fi
 
 # ── Setup ───────────────────────────────────────────────────────
-ENTR_PID=""
-
 cleanup() {
     trap - SIGINT SIGTERM   # prevent re-entry
-    [[ -n "$ENTR_PID" ]] && kill "$ENTR_PID" 2>/dev/null && wait "$ENTR_PID" 2>/dev/null
     rm -f "$PROJECT_DIR/preview/components" "$PROJECT_DIR/preview/assets"
     echo ""
     echo "Preview stopped."
@@ -78,15 +76,11 @@ ln -sfn "$THEME_DIR/assets"     "$PROJECT_DIR/preview/assets"
 echo "=== KDE Lockscreen Builder — Live Preview ==="
 echo "Project: $PROJECT_DIR"
 echo "Theme:   $THEME_NAME ($THEME_DIR)"
+echo "Hot reload: editing theme files will update the preview in-place"
 echo "Press Ctrl+C to stop"
 echo ""
 
-cd "$PROJECT_DIR"
+# Launch the PyQt6 preview host (handles file watching + cache clearing).
+python3 "$SCRIPT_DIR/preview-host.py"
 
-while true; do
-    find . \( -name '*.qml' -o -name '*.conf' -o -name '*.jpg' -o -name '*.png' -o -name '*.svg' \) \
-        | entr -d -r qml6 preview/Preview.qml &
-    ENTR_PID=$!
-    wait "$ENTR_PID" || true
-    ENTR_PID=""
-done
+cleanup
