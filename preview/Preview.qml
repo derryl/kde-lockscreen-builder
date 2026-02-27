@@ -3,7 +3,7 @@ import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
 
-import "../components"
+import "components"
 
 /*
  * Preview.qml - Development harness for the SDDM theme.
@@ -15,8 +15,10 @@ import "../components"
  * Components receive their dependencies as explicit properties, so they
  * work identically whether driven by SDDM or by this preview.
  *
- * Usage:  qml6 preview/Preview.qml
- *    or:  qmlscene6 preview/Preview.qml
+ * The preview script symlinks components/ and assets/ into preview/
+ * so that relative imports and asset paths resolve to the selected theme.
+ *
+ * Usage:  ./scripts/preview.sh [-theme <name>]
  */
 
 Window {
@@ -34,7 +36,7 @@ Window {
         id: mockConfig
         // Set to "" to use the solid fallback color, or provide a path
         // to an image (e.g. drop your own into assets/background.jpg).
-        property string background: Qt.resolvedUrl("../assets/background.jpg")
+        property string background: Qt.resolvedUrl("assets/background.jpg")
         property string type: "image"
         property string color: "#1a1a2e"
         property string primaryColor: "#ffffff"
