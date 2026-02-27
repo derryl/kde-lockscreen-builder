@@ -3,3 +3,4 @@ preview/Main.qml
 preview/components
 preview/assets
 preview/.reload-signal
+*/__pycache__
