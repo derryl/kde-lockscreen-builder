@@ -96,6 +96,28 @@ Item {
         }
     }
 
+    // ── Power buttons (centered below login form) ───────────────
+
+    PowerBar {
+        id: powerBar
+        anchors {
+            top: loginForm.bottom
+            horizontalCenter: parent.horizontalCenter
+            topMargin: 24
+        }
+        textColor: root.primaryColor
+        fontSize: root.baseFontSize - 2
+        iconSize: root.baseFontSize + 6
+
+        canSuspend: sddm.canSuspend
+        canReboot: sddm.canReboot
+        canPowerOff: sddm.canPowerOff
+
+        onSuspendClicked: sddm.suspend()
+        onRebootClicked: sddm.reboot()
+        onPowerOffClicked: sddm.powerOff()
+    }
+
     // ── Footer ───────────────────────────────────────────────────
 
     RowLayout {
@@ -119,22 +141,6 @@ Item {
         }
 
         Item { Layout.fillWidth: true }
-
-        PowerBar {
-            id: powerBar
-            textColor: root.primaryColor
-            fontSize: root.baseFontSize - 2
-            iconSize: root.baseFontSize + 6
-            Layout.preferredHeight: 48
-
-            canSuspend: sddm.canSuspend
-            canReboot: sddm.canReboot
-            canPowerOff: sddm.canPowerOff
-
-            onSuspendClicked: sddm.suspend()
-            onRebootClicked: sddm.reboot()
-            onPowerOffClicked: sddm.powerOff()
-        }
     }
 
     // ── SDDM Connections ─────────────────────────────────────────
