@@ -14,7 +14,7 @@ Item {
     id: root
 
     property color textColor: "white"
-    property color accentColor: "#4a9eff"
+    property color accentColor: '#ff534a'
     property int fontSize: 12
     property string fontFamily: ""
 
@@ -59,7 +59,7 @@ Item {
                 id: passwordField
                 width: parent.width - loginButton.width - passwordRow.spacing
                 height: 44
-                placeholderText: "Password"
+                placeholderText: "••••••"
                 echoMode: TextInput.Password
                 font.pointSize: root.fontSize
                 font.family: root.fontFamily
@@ -81,7 +81,7 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 1
                         radius: 7
-                        color: "#1e293b"
+                        color: '#1b1913'
                         border.color: Qt.rgba(255, 255, 255, 0.06)
                         border.width: 1
                     }
@@ -111,8 +111,8 @@ Item {
                 height: 44
 
                 contentItem: Text {
-                    text: "\u25B6"  // ▶
-                    font.pointSize: root.fontSize + 2
+                    text: "\uD83E\uDE90"  // Planet emoji
+                    font.pointSize: Math.round(root.fontSize * 1.5)
                     font.family: root.fontFamily
                     color: "white"
                     horizontalAlignment: Text.AlignHCenter
@@ -124,7 +124,7 @@ Item {
                     color: loginButton.down ? Qt.darker(root.accentColor, 1.2) :
                            loginButton.hovered ? Qt.lighter(root.accentColor, 1.1) :
                            root.accentColor
-                    radius: 8
+                    radius: 44
 
                     Behavior on color {
                         ColorAnimation { duration: 120 }

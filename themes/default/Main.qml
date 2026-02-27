@@ -106,8 +106,8 @@ Item {
             topMargin: 24
         }
         textColor: root.primaryColor
-        fontSize: root.baseFontSize - 2
-        iconSize: root.baseFontSize + 6
+        // fontSize: root.baseFontSize
+        // iconSize: root.baseFontSize + 6
 
         canSuspend: sddm.canSuspend
         canReboot: sddm.canReboot

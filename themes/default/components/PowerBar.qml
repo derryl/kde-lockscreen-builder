@@ -11,8 +11,8 @@ Item {
     id: root
 
     property color textColor: "white"
-    property int fontSize: 10
-    property int iconSize: 22
+    property int fontSize: 12
+    property int iconSize: 24
 
     property bool canSuspend: false
     property bool canReboot: false
@@ -28,7 +28,7 @@ Item {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 24
+        spacing: 48
 
         PowerButton {
             icon: "\u23FB"   // ⏻
