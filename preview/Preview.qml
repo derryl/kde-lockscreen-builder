@@ -107,8 +107,14 @@ Window {
     //  Hot-reload Loader
     // ═══════════════════════════════════════════════════════════════
 
-    // Reload generation counter — incremented by the file watcher.
-    property int reloadGeneration: 0
+    // Hot-reload: `hotReloader` is a context property injected by
+    // preview-host.py.  Reload is a 3-phase process orchestrated by Python:
+    //   1. unloadRequested  → QML destroys all component instances
+    //   2. Python clears the now-unreferenced component cache
+    //   3. reloadRequested  → QML reloads components from disk
+    //
+    // When hotReloader is not present (e.g. launched via plain qml6),
+    // the theme loads once without hot-reload.
 
     Loader {
         id: themeLoader
@@ -120,45 +126,21 @@ Window {
         }
     }
 
-    // (Re)load the theme layout, passing the preview reference as an
-    // initial property so `required property` is satisfied at creation time.
-    function reloadTheme() {
+    function loadTheme() {
         themeLoader.setSource("ThemeLayout.qml", { "preview": previewWindow })
     }
 
-    onReloadGenerationChanged: reloadTheme()
-    Component.onCompleted: reloadTheme()
-
-    // Poll a signal file whose content is a timestamp written by entr.
-    // When the content changes, we bump the Loader's generation counter.
-    // This avoids needing C++ filesystem-watcher plugins.
-    property string signalFileUrl: Qt.resolvedUrl(".reload-signal")
-    property string lastSignalContent: ""
-
-    Timer {
-        id: fileWatcher
-        interval: 500
-        running: true
-        repeat: true
-        onTriggered: {
-            var xhr = new XMLHttpRequest()
-            // Append cache-buster so QML doesn't serve a stale cached read
-            xhr.open("GET", previewWindow.signalFileUrl + "?t=" + Date.now(), false)
-            try {
-                xhr.send()
-                if (xhr.status === 200 || xhr.responseText !== "") {
-                    var content = xhr.responseText.trim()
-                    if (content !== "" && content !== previewWindow.lastSignalContent) {
-                        previewWindow.lastSignalContent = content
-                        previewWindow.reloadGeneration++
-                        console.log("[hot-reload] Change detected — reloading theme (gen " + previewWindow.reloadGeneration + ")")
-                    }
-                }
-            } catch (e) {
-                // Signal file doesn't exist yet — ignore
-            }
-        }
+    function unloadTheme() {
+        themeLoader.source = ""
     }
+
+    Connections {
+        target: typeof hotReloader !== "undefined" ? hotReloader : null
+        function onUnloadRequested() { previewWindow.unloadTheme() }
+        function onReloadRequested() { previewWindow.loadTheme() }
+    }
+
+    Component.onCompleted: loadTheme()
 
     // ── Preview overlay ──────────────────────────────────────────
     Rectangle {
