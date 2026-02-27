@@ -3,20 +3,13 @@ import QtQuick.Window
 import QtQuick.Layouts
 import QtQuick.Controls
 
-import "components"
-
 /*
  * Preview.qml - Development harness for the SDDM theme.
  *
- * Mirrors the Main.qml layout but provides mock objects in place of
- * the SDDM context properties (sddm, userModel, sessionModel, config,
- * screenModel, keyboard).
- *
- * Components receive their dependencies as explicit properties, so they
- * work identically whether driven by SDDM or by this preview.
- *
- * The preview script symlinks components/ and assets/ into preview/
- * so that relative imports and asset paths resolve to the selected theme.
+ * Provides mock objects in place of the SDDM context properties, then loads
+ * the theme layout through a Loader.  A file-watcher timer detects changes
+ * (via a signal file touched by entr) and reloads the Loader in-place,
+ * keeping the window open for a true live-preview experience.
  *
  * Usage:  ./scripts/preview.sh [-theme <name>]
  */
@@ -32,10 +25,7 @@ Window {
     //  Mock objects
     // ═══════════════════════════════════════════════════════════════
 
-    QtObject {
-        id: mockConfig
-        // Set to "" to use the solid fallback color, or provide a path
-        // to an image (e.g. drop your own into assets/background.jpg).
+    property QtObject mockConfig: QtObject {
         property string background: Qt.resolvedUrl("assets/background.jpg")
         property string type: "image"
         property string color: "#1a1a2e"
@@ -52,8 +42,7 @@ Window {
         property int screenHeight: previewWindow.height
     }
 
-    QtObject {
-        id: mockSddm
+    property QtObject mockSddm: QtObject {
         property string hostname: "preview-host"
         property bool canPowerOff: true
         property bool canReboot: true
@@ -81,8 +70,7 @@ Window {
         function hybridSleep() { console.log("[mock] sddm.hybridSleep()") }
     }
 
-    ListModel {
-        id: mockUserModel
+    property ListModel mockUserModel: ListModel {
         property string lastUser: "user"
         property int lastIndex: 0
         property int disableAvatarsThreshold: 7
@@ -92,8 +80,7 @@ Window {
         ListElement { name: "guest"; realName: "Guest User"; icon: ""; needsPassword: true }
     }
 
-    ListModel {
-        id: mockSessionModel
+    property ListModel mockSessionModel: ListModel {
         property int lastIndex: 0
 
         ListElement { name: "Plasma (Wayland)"; comment: "" }
@@ -101,8 +88,7 @@ Window {
         ListElement { name: "GNOME"; comment: "" }
     }
 
-    QtObject {
-        id: mockKeyboard
+    property QtObject mockKeyboard: QtObject {
         property bool capsLock: false
         property bool numLock: true
     }
@@ -118,129 +104,60 @@ Window {
     property color accentColor: mockConfig.accentColor || "#4a9eff"
 
     // ═══════════════════════════════════════════════════════════════
-    //  Theme layout (identical to Main.qml)
+    //  Hot-reload Loader
     // ═══════════════════════════════════════════════════════════════
 
-    // ── Background ───────────────────────────────────────────────
-    Image {
-        id: backgroundImage
+    // Reload generation counter — incremented by the file watcher.
+    property int reloadGeneration: 0
+
+    Loader {
+        id: themeLoader
         anchors.fill: parent
-        source: mockConfig.background || ""
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: true
+
         onStatusChanged: {
-            if (status === Image.Error && source != "")
-                console.log("Background image not found — using fallback color. " +
-                    "Drop an image into assets/background.jpg or update theme.conf.")
+            if (status === Loader.Error)
+                console.log("[hot-reload] Error loading ThemeLayout.qml — check for syntax errors")
         }
     }
 
-    Rectangle {
-        id: backgroundFallback
-        anchors.fill: parent
-        color: mockConfig.color || "#1a1a2e"
-        visible: backgroundImage.status !== Image.Ready
+    // (Re)load the theme layout, passing the preview reference as an
+    // initial property so `required property` is satisfied at creation time.
+    function reloadTheme() {
+        themeLoader.setSource("ThemeLayout.qml", { "preview": previewWindow })
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: mockConfig.backgroundOverlayColor || "#000000"
-        opacity: mockConfig.backgroundOverlayOpacity || 0.3
-    }
+    onReloadGenerationChanged: reloadTheme()
+    Component.onCompleted: reloadTheme()
 
-    // ── Clock ────────────────────────────────────────────────────
-    Clock {
-        id: clock
-        visible: mockConfig.clockVisible === "true"
-        anchors {
-            top: parent.top
-            horizontalCenter: parent.horizontalCenter
-            topMargin: previewWindow.height * 0.08
-        }
-        textColor: primaryColor
-        fontSize: baseFontSize * 4
-        timeFormat: mockConfig.clockFormat || "hh:mm"
-        dateFormat: mockConfig.dateFormat || "dddd, MMMM d"
-    }
-
-    // ── Login form ───────────────────────────────────────────────
-    LoginForm {
-        id: loginForm
-        anchors.centerIn: parent
-        width: 320
-
-        textColor: primaryColor
-        accentColor: previewWindow.accentColor
-        fontSize: baseFontSize
-        fontFamily: previewWindow.fontFamily
-        defaultUsername: mockUserModel.lastUser || ""
-        notificationMessage: previewWindow.notificationMessage
-        capsLockOn: mockKeyboard.capsLock
-
-        sessionIndex: sessionSelector.currentIndex
-
-        onLoginRequest: function(username, password) {
-            previewWindow.notificationMessage = ""
-            mockSddm.login(username, password, sessionSelector.currentIndex)
-        }
-    }
-
-    // ── Footer ───────────────────────────────────────────────────
-    RowLayout {
-        id: footer
-        anchors {
-            bottom: parent.bottom
-            left: parent.left
-            right: parent.right
-            margins: 16
-        }
-        height: 48
-
-        SessionSelector {
-            id: sessionSelector
-            textColor: primaryColor
-            fontSize: baseFontSize - 2
-            fontFamily: previewWindow.fontFamily
-            sessions: mockSessionModel
-            Layout.preferredWidth: 180
-            Layout.preferredHeight: 32
-        }
-
-        Item { Layout.fillWidth: true }
-
-        PowerBar {
-            id: powerBar
-            textColor: primaryColor
-            fontSize: baseFontSize - 2
-            iconSize: baseFontSize + 6
-            Layout.preferredHeight: 48
-
-            canSuspend: mockSddm.canSuspend
-            canReboot: mockSddm.canReboot
-            canPowerOff: mockSddm.canPowerOff
-
-            onSuspendClicked: mockSddm.suspend()
-            onRebootClicked: mockSddm.reboot()
-            onPowerOffClicked: mockSddm.powerOff()
-        }
-    }
-
-    // ── SDDM connections ─────────────────────────────────────────
-    Connections {
-        target: mockSddm
-        function onLoginFailed() {
-            previewWindow.notificationMessage = "Login Failed"
-            loginForm.clearPassword()
-        }
-        function onLoginSucceeded() {
-            previewWindow.notificationMessage = ""
-        }
-    }
+    // Poll a signal file whose content is a timestamp written by entr.
+    // When the content changes, we bump the Loader's generation counter.
+    // This avoids needing C++ filesystem-watcher plugins.
+    property string signalFileUrl: Qt.resolvedUrl(".reload-signal")
+    property string lastSignalContent: ""
 
     Timer {
-        interval: 3000
-        running: notificationMessage !== ""
-        onTriggered: notificationMessage = ""
+        id: fileWatcher
+        interval: 500
+        running: true
+        repeat: true
+        onTriggered: {
+            var xhr = new XMLHttpRequest()
+            // Append cache-buster so QML doesn't serve a stale cached read
+            xhr.open("GET", previewWindow.signalFileUrl + "?t=" + Date.now(), false)
+            try {
+                xhr.send()
+                if (xhr.status === 200 || xhr.responseText !== "") {
+                    var content = xhr.responseText.trim()
+                    if (content !== "" && content !== previewWindow.lastSignalContent) {
+                        previewWindow.lastSignalContent = content
+                        previewWindow.reloadGeneration++
+                        console.log("[hot-reload] Change detected — reloading theme (gen " + previewWindow.reloadGeneration + ")")
+                    }
+                }
+            } catch (e) {
+                // Signal file doesn't exist yet — ignore
+            }
+        }
     }
 
     // ── Preview overlay ──────────────────────────────────────────
@@ -266,8 +183,8 @@ Window {
             }
             Text { text: "|"; color: "#80ffffff"; font.pointSize: 9 }
             Text {
-                text: "Preview Mode"
-                color: "#ffcc00"
+                text: "Live Preview"
+                color: "#00ff88"
                 font.pointSize: 9
                 font.bold: true
             }
